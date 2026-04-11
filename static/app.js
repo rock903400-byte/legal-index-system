@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allResults = [];
     let activeCategory = 'all';
     let currentQuery = ''; 
-    let currentPdfDoc = null; // 儲存目前的 PDF 實例
+    let currentPdfDoc = null; 
 
     const performSearch = async () => {
         const query = searchInput.value.trim();
@@ -96,11 +96,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.preview-placeholder').style.display = 'none';
         previewSection.classList.add('open');
         
-        // 隱藏所有視窗，準備載入
         previewFrame.style.display = 'none';
         docxViewer.style.display = 'none';
         pdfViewer.style.display = 'none';
-        pdfHint.style.display = 'none';
         
         previewFrame.src = "about:blank";
         docxViewer.innerHTML = "";
@@ -138,48 +136,78 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- 解法二：自訂 PDF 閱讀器核心邏輯 ---
     async function renderPdfDocument(url, query) {
-        pdfViewer.innerHTML = '<div style="text-align: center; padding: 3rem; color: #7f8c8d; font-size: 1.1rem;">載入 PDF 中，正在建立高亮索引...</div>';
+        pdfViewer.innerHTML = '<div style="text-align: center; padding: 3rem; color: #7f8c8d; font-size: 1.1rem;">載入 PDF 中，正在定位關鍵字...</div>';
         window.hasScrolledToPdfMatch = false; 
         
         try {
             const loadingTask = pdfjsLib.getDocument(url);
             currentPdfDoc = await loadingTask.promise;
-            pdfViewer.innerHTML = ''; // 清空載入中文字
+            pdfViewer.innerHTML = ''; 
             
-            // 建立每一頁的容器
+            // 1. 先建立所有頁面的容器
             for (let pageNum = 1; pageNum <= currentPdfDoc.numPages; pageNum++) {
                 const pageWrapper = document.createElement('div');
                 pageWrapper.className = 'pdf-page-container';
-                pageWrapper.setAttribute('data-page-number', pageNum);
+                pageWrapper.id = `pdf-page-${pageNum}`;
                 
-                // Canvas 負責渲染 PDF 畫面
                 const canvas = document.createElement('canvas');
                 pageWrapper.appendChild(canvas);
                 
-                // TextLayer 負責文字選取與高亮
                 const textLayerDiv = document.createElement('div');
                 textLayerDiv.className = 'textLayer';
                 pageWrapper.appendChild(textLayerDiv);
                 
                 pdfViewer.appendChild(pageWrapper);
-                
-                // 懶加載 (Lazy Loading)：當捲動到該頁時才開始渲染，避免卡頓
+
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            observer.unobserve(pageWrapper); // 渲染一次後解除觀察
+                            observer.unobserve(pageWrapper);
                             renderPdfPage(pageNum, pageWrapper, canvas, textLayerDiv, query);
                         }
                     });
-                }, { root: pdfViewer, rootMargin: '100% 0px' }); // 預先渲染前後一頁
+                }, { root: pdfViewer, rootMargin: '100% 0px' });
                 
                 observer.observe(pageWrapper);
             }
+
+            // 2. 定位跳轉
+            if (query) {
+                setTimeout(() => {
+                    findAndJumpToFirstMatch(currentPdfDoc, query);
+                }, 100); 
+            }
+
         } catch (e) {
             console.error('PDF render error:', e);
             pdfViewer.innerHTML = '<div style="text-align: center; padding: 3rem; color: #e74c3c;">PDF 載入失敗。</div>';
+        }
+    }
+
+    async function findAndJumpToFirstMatch(pdfDoc, query) {
+        // 正規化查詢字串，移除所有空白
+        const normalizedQuery = query.replace(/\s+/g, '').toLowerCase();
+        
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i);
+            const content = await page.getTextContent();
+            // 將整頁文字串接並移除所有空白與換行，增加比對成功率
+            const pageText = content.items.map(item => item.str).join('').replace(/\s+/g, '').toLowerCase();
+            
+            if (pageText.includes(normalizedQuery)) {
+                const targetPage = document.getElementById(`pdf-page-${i}`);
+                if (targetPage) {
+                    console.log(`Found match on page ${i}, scrolling...`);
+                    // 使用稍微明顯的捲動效果
+                    pdfViewer.scrollTo({
+                        top: targetPage.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                    window.hasScrolledToPdfMatch = true;
+                }
+                break;
+            }
         }
     }
 
@@ -187,24 +215,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!currentPdfDoc) return;
         const page = await currentPdfDoc.getPage(pageNum);
         
-        // 根據視窗寬度動態計算 PDF 縮放比例
         const isMobile = window.innerWidth <= 768;
-        const containerWidth = wrapper.parentElement.clientWidth - (isMobile ? 0 : 40); 
+        const containerWidth = isMobile ? window.innerWidth : wrapper.parentElement.clientWidth - 40; 
         const unscaledViewport = page.getViewport({ scale: 1.0 });
         let scale = containerWidth / unscaledViewport.width;
-        if (scale > 2.5) scale = 2.5; // 稍微放寬最大縮放
+        if (scale > 2.5) scale = 2.5;
         if (scale < 0.5) scale = 0.5;
         
         const viewport = page.getViewport({ scale: scale });
-        
-        // 取得設備像素比 (解決模糊與殘影問題的關鍵)
         const outputScale = window.devicePixelRatio || 1;
         
-        // 設定 Canvas 的「實際解析度」 (乘上像素比，讓畫質變細緻)
         canvas.width = Math.floor(viewport.width * outputScale);
         canvas.height = Math.floor(viewport.height * outputScale);
-        
-        // 設定 Canvas 的「CSS 顯示大小」
         canvas.style.width = Math.floor(viewport.width) + "px";
         canvas.style.height = Math.floor(viewport.height) + "px";
         
@@ -212,7 +234,6 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.style.height = Math.floor(viewport.height) + 'px';
         
         const ctx = canvas.getContext('2d');
-        // 將繪圖內容放大以匹配高解析度畫布
         ctx.scale(outputScale, outputScale);
         
         const renderContext = {
@@ -220,10 +241,8 @@ document.addEventListener('DOMContentLoaded', () => {
             viewport: viewport
         };
         
-        // 渲染畫面
         await page.render(renderContext).promise;
         
-        // 渲染文字層 (TextLayer)
         const textContent = await page.getTextContent();
         textLayerDiv.style.width = viewport.width + 'px';
         textLayerDiv.style.height = viewport.height + 'px';
@@ -236,42 +255,26 @@ document.addEventListener('DOMContentLoaded', () => {
             textDivs: []
         }).promise;
         
-        // 如果有關鍵字，進行高亮處理
         if (query) {
             highlightPdfText(textLayerDiv, query);
         }
     }
 
     function highlightPdfText(textLayerDiv, query) {
-        // 利用 TreeWalker 尋找所有文字節點
         const regex = new RegExp(`(${query})`, 'gi');
         const walker = document.createTreeWalker(textLayerDiv, NodeFilter.SHOW_TEXT, null, false);
         const nodes = [];
         let node;
         while (node = walker.nextNode()) nodes.push(node);
         
-        let hasMatch = false;
         nodes.forEach(textNode => {
             const text = textNode.nodeValue;
             if (regex.test(text)) {
-                hasMatch = true;
                 const span = document.createElement('span');
                 span.innerHTML = text.replace(regex, '<mark class="doc-highlight">$1</mark>');
                 textNode.parentNode.replaceChild(span, textNode);
             }
         });
-        
-        // 自動捲動到第一個找到的關鍵字 (僅觸發一次)
-        if (hasMatch && !window.hasScrolledToPdfMatch) {
-            window.hasScrolledToPdfMatch = true;
-            const firstMark = textLayerDiv.querySelector('.doc-highlight');
-            if (firstMark) {
-                // 稍微延遲捲動，確保渲染完成
-                setTimeout(() => {
-                    firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 100);
-            }
-        }
     }
 
     closePreview.addEventListener('click', () => {
