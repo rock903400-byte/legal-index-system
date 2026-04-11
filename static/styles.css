@@ -1,18 +1,18 @@
 :root {
     --primary: #2c3e50;
     --accent: #3498db;
-    --bg: #f5f7f9;
+    --bg: #f0f2f5;
     --text: #333;
     --border: #e1e4e8;
     --white: #fff;
-    --shadow: 0 2px 10px rgba(0,0,0,0.05);
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: "Microsoft JhengHei", -apple-system, sans-serif;
+    font-family: "Microsoft JhengHei", -apple-system, system-ui, sans-serif;
 }
 
 body {
@@ -27,12 +27,17 @@ body {
 header {
     background-color: var(--primary);
     color: var(--white);
-    padding: 1rem 2rem;
+    padding: 0.8rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     z-index: 100;
+}
+
+header h1 {
+    font-size: 1.4rem;
+    letter-spacing: 1px;
 }
 
 header h1 span {
@@ -43,33 +48,41 @@ header h1 span {
 
 .search-container {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.8rem;
     flex: 1;
-    max-width: 600px;
-    margin-left: 2rem;
+    max-width: 650px;
+    margin-left: 3rem;
 }
 
 #search-input {
     flex: 1;
-    padding: 0.6rem 1rem;
-    border: none;
-    border-radius: 4px;
+    padding: 0.7rem 1.2rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
     font-size: 1rem;
+    outline: none;
+    transition: all 0.3s;
+}
+
+#search-input:focus {
+    background-color: white;
+    color: black;
 }
 
 #search-btn {
-    padding: 0.6rem 1.5rem;
+    padding: 0.7rem 1.8rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     background-color: var(--accent);
     color: white;
     cursor: pointer;
     font-weight: bold;
-    transition: background 0.2s;
+    transition: transform 0.1s, background 0.2s;
 }
 
 #search-btn:hover {
     background-color: #2980b9;
+    transform: translateY(-1px);
 }
 
 main {
@@ -79,8 +92,8 @@ main {
 }
 
 aside {
-    width: 200px;
-    background-color: var(--white);
+    width: 220px;
+    background-color: white;
     border-right: 1px solid var(--border);
     padding: 1.5rem 0;
     overflow-y: auto;
@@ -88,8 +101,8 @@ aside {
 
 aside h3 {
     padding: 0 1.5rem 1rem;
-    font-size: 0.9rem;
-    color: #7f8c8d;
+    font-size: 0.85rem;
+    color: #95a5a6;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -99,8 +112,9 @@ aside h3 {
 }
 
 #category-list li {
-    padding: 0.75rem 1.5rem;
+    padding: 0.8rem 1.5rem;
     cursor: pointer;
+    font-size: 0.95rem;
     transition: all 0.2s;
     border-left: 4px solid transparent;
 }
@@ -121,136 +135,125 @@ aside h3 {
     flex: 1;
     display: flex;
     flex-direction: column;
-    padding: 1rem 1.5rem;
+    padding: 1.5rem 2rem;
     overflow-y: auto;
-    background-color: var(--white);
+    background-color: white;
 }
 
 #status-bar {
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
     color: #7f8c8d;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
 }
 
 #results-list {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1.5rem;
 }
 
 .result-card {
-    padding: 1rem;
+    padding: 1.2rem;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 8px;
+    transition: all 0.2s;
     cursor: pointer;
 }
 
 .result-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
     border-color: var(--accent);
+    box-shadow: var(--shadow);
 }
 
 .result-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.8rem;
 }
 
 .result-title {
-    font-weight: bold;
-    font-size: 1.1rem;
+    font-weight: 700;
+    font-size: 1.15rem;
     color: var(--primary);
 }
 
 .badge {
-    padding: 0.2rem 0.5rem;
-    border-radius: 3px;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
     font-size: 0.75rem;
     background-color: #ecf0f1;
     color: #7f8c8d;
+    font-weight: 600;
 }
 
 .result-preview {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: #666;
-    line-height: 1.5;
+    line-height: 1.6;
     background-color: #f9f9f9;
-    padding: 0.5rem;
-    border-radius: 4px;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border-left: 3px solid #ddd;
 }
 
 .result-preview mark {
     background-color: #ffeaa7;
     color: #d35400;
-    padding: 0 2px;
+    padding: 0 3px;
     border-radius: 2px;
 }
 
-.empty-state {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: #bdc3c7;
-    font-size: 1.2rem;
-}
-
+/* --- 預覽區域 (重點優化) --- */
 #preview-section {
     width: 0;
-    background-color: var(--white);
+    background-color: #f8f9fa;
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease-in-out;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 1000;
 }
 
 #preview-section.open {
-    width: 75%; /* 電腦版改為 75%，提供更廣的閱讀視野 */
-}
-
-/* 文件內高亮樣式 (Word) */
-.doc-highlight {
-    background-color: #ffeb3b; /* 鮮黃色 */
-    color: #000;
-    padding: 2px 0;
-    font-weight: bold;
-    border-radius: 2px;
-    box-shadow: 0 0 5px rgba(255, 235, 59, 0.5);
+    width: 60%; /* 平衡的 60% 比例 */
 }
 
 #preview-header {
-    padding: 0.8rem 1.2rem;
-    background-color: #34495e; /* 更深沉的專業藍灰色 */
+    padding: 1rem 1.5rem;
+    background-color: #2c3e50;
     color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 #preview-title {
-    font-size: 1rem;
-    font-weight: bold;
+    font-size: 1.1rem;
+    font-weight: 600;
+    max-width: 75%;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-right: 1rem;
 }
 
 #close-preview {
     background-color: #e74c3c;
     color: white;
     border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 4px;
+    padding: 0.5rem 1.2rem;
+    border-radius: 6px;
     cursor: pointer;
     font-weight: bold;
-    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+#close-preview:hover {
+    background-color: #c0392b;
 }
 
 #preview-container {
@@ -258,7 +261,7 @@ aside h3 {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: calc(100% - 50px);
+    background-color: #f0f2f5; /* 整體背景稍微深一點，突出紙張感 */
 }
 
 #preview-frame {
@@ -266,6 +269,7 @@ aside h3 {
     width: 100%;
     height: 100%;
     border: none;
+    background-color: white;
 }
 
 #docx-viewer {
@@ -273,38 +277,35 @@ aside h3 {
     width: 100%;
     height: 100%;
     overflow-y: auto;
-    padding: 1.5rem;
+    padding: 3rem;
     background-color: white;
 }
 
 .docx-content {
-    max-width: 800px;
+    max-width: 850px; /* 閱讀最舒服的寬度 */
     margin: 0 auto;
-    line-height: 1.6;
+    line-height: 1.8;
+    color: #2c3e50;
+    font-size: 1.1rem;
 }
 
-@media (max-width: 768px) {
-    #preview-section.open {
-        width: 100%;
-        height: 100%;
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 2000;
-        visibility: visible;
-    }
+.doc-highlight {
+    background-color: #ffeb3b;
+    color: #000;
+    padding: 2px 0;
+    border-radius: 2px;
 }
-
 
 .preview-placeholder {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: #95a5a6;
+    color: #bdc3c7;
+    font-size: 1.2rem;
 }
 
-/* 手機版優化 (RWD) */
+/* 手機版 RWD 優化 */
 @media (max-width: 768px) {
     header {
         flex-direction: column;
@@ -348,7 +349,7 @@ aside h3 {
     }
 
     #category-list li {
-        padding: 0.5rem 1rem;
+        padding: 0.6rem 1.2rem;
         border-left: none;
         border-bottom: 3px solid transparent;
     }
@@ -360,7 +361,7 @@ aside h3 {
 
     #results-section {
         width: 100%;
-        padding: 0.5rem;
+        padding: 1rem;
     }
 
     #preview-section {
@@ -371,7 +372,7 @@ aside h3 {
         bottom: 0;
         left: 0;
         background-color: white;
-        z-index: 1000;
+        z-index: 2000;
         transition: height 0.3s ease;
         visibility: hidden;
         overflow: hidden;
@@ -384,33 +385,9 @@ aside h3 {
 
     #preview-header {
         padding: 1rem;
-        background-color: var(--white);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--border);
     }
 
-    #preview-title {
-        font-size: 1rem;
-        font-weight: bold;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 70%;
-    }
-
-    #close-preview {
-        padding: 0.5rem 1rem;
-        background-color: #e74c3c;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        min-width: 60px;
-    }
-
-    .result-card {
-        padding: 0.8rem;
+    #docx-viewer {
+        padding: 1.5rem;
     }
 }
-

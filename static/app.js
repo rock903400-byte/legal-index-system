@@ -11,13 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allResults = [];
     let activeCategory = 'all';
-    let currentQuery = ''; // 紀錄目前搜尋的字串
+    let currentQuery = ''; 
 
     const performSearch = async () => {
         const query = searchInput.value.trim();
         if (!query) return;
 
-        currentQuery = query; // 儲存關鍵字供高亮使用
+        currentQuery = query; 
         resultsList.innerHTML = '<div class="empty-state">搜尋中...</div>';
         
         try {
@@ -53,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // 綁定點擊事件
         document.querySelectorAll('.result-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -90,21 +89,41 @@ document.addEventListener('DOMContentLoaded', () => {
         previewSection.classList.add('open');
         
         const docxViewer = document.getElementById('docx-viewer');
+        const pdfHint = document.getElementById('pdf-search-hint');
+
+        // 先重設內容，避免殘留舊文件的畫面
+        previewFrame.src = "about:blank";
+        docxViewer.innerHTML = "";
+        pdfHint.style.display = 'none';
 
         if (filename.endsWith('.pdf')) {
             docxViewer.style.display = 'none';
             previewFrame.style.display = 'block';
-            previewFrame.style.width = '100%';
-            previewFrame.style.height = '100%';
-            // PDF 高亮：使用 #search="keyword" (僅 Chrome/Edge 支援) 
-            // 同時加入 toolbar=0 隱藏多餘工具列
-            const highlightParam = currentQuery ? `&search="${encodeURIComponent(currentQuery)}"` : '';
-            previewFrame.src = result.url + `#toolbar=0&navpanes=0&view=FitH${highlightParam}`;
+            
+            // 顯示 PDF 專屬搜尋提示 (更精準的指示)
+            if (currentQuery) {
+                pdfHint.style.display = 'inline-block';
+                pdfHint.innerHTML = `💡 提示：請先<b>點擊文件內部</b>，再按 <b>Ctrl + F</b> 搜尋「${currentQuery}」`;
+            }
+            
+            let pdfUrl = result.url;
+            let params = `#view=FitH&toolbar=0&navpanes=0`;
+            if (currentQuery) {
+                params = `#search=${encodeURIComponent(currentQuery)}` + params.replace('#', '&');
+            }
+            
+            setTimeout(() => {
+                previewFrame.src = pdfUrl + params;
+                // 嘗試自動將游標焦點鎖定在 PDF 視窗內
+                setTimeout(() => {
+                    previewFrame.focus();
+                }, 500);
+            }, 50);
+
         } else if (filename.endsWith('.docx')) {
             previewFrame.style.display = 'none';
-            previewFrame.src = '';
             docxViewer.style.display = 'block';
-            docxViewer.innerHTML = '<div style="text-align: center; padding: 3rem; color: #7f8c8d;">載入 Word 文件中，請稍候...</div>';
+            docxViewer.innerHTML = '<div style="text-align: center; padding: 3rem; color: #7f8c8d;">載入 Word 文件中...</div>';
             
             try {
                 const response = await fetch(result.url);
@@ -112,35 +131,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 const renderResult = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
                 
                 let html = renderResult.value;
-                // Word 高亮：手動替換文字內容
                 if (currentQuery) {
                     const regex = new RegExp(`(${currentQuery})`, 'gi');
                     html = html.replace(regex, '<mark class="doc-highlight">$1</mark>');
                 }
                 
                 docxViewer.innerHTML = `<div class="docx-content">${html}</div>`;
-                // 自動捲動到第一個高亮點
+                
                 setTimeout(() => {
                     const firstMark = docxViewer.querySelector('.doc-highlight');
                     if (firstMark) firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 500);
+                }, 300);
                 
             } catch (err) {
                 console.error('DOCX render error:', err);
-                docxViewer.innerHTML = `
-                    <div style="text-align: center; padding: 3rem;">
-                        <p style="color: #e74c3c; margin-bottom: 1rem;">線上預覽失敗，此文件可能包含複雜格式。</p>
-                        <a href="${result.url}" target="_blank" style="display: inline-block; padding: 0.5rem 1rem; background: var(--accent); color: white; text-decoration: none; border-radius: 4px;">點此下載檔案</a>
-                    </div>`;
+                docxViewer.innerHTML = `<div style="text-align: center; padding: 3rem; color: #e74c3c;">預覽失敗，建議下載查看。</div>`;
             }
-        } else {
-            window.open(result.url, '_blank');
         }
     };
 
     closePreview.addEventListener('click', () => {
         previewSection.classList.remove('open');
-        previewFrame.src = '';
+        previewFrame.src = 'about:blank';
         document.getElementById('docx-viewer').innerHTML = '';
     });
 
