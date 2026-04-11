@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>協會法規智慧索引系統</title>
-    <link rel="stylesheet" href="styles.css?v=1.2">
+    <!-- PDF.js 的樣式 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
+    <link rel="stylesheet" href="styles.css?v=1.4">
 </head>
 <body>
     <header>
@@ -43,7 +45,7 @@
                 <span id="preview-title">文件預覽</span>
                 <div style="display: flex; align-items: center;">
                     <span id="pdf-search-hint" style="display: none; font-size: 0.9rem; color: #f1c40f; margin-right: 15px; font-weight: normal;">
-                        💡 提示：點擊畫面按 <b>Ctrl + F</b> 搜尋
+                        <!-- 舊版提示已不需要，保留元素避免報錯 -->
                     </span>
                     <button id="close-preview">關閉</button>
                 </div>
@@ -52,11 +54,14 @@
                 <div class="preview-placeholder">點擊搜尋結果進行預覽</div>
                 <iframe id="preview-frame" src="" frameborder="0"></iframe>
                 <div id="docx-viewer"></div>
+                <div id="pdf-viewer"></div>
             </div>
         </section>
     </main>
 
+    <!-- 引入 Mammoth (處理 Word) 與 PDF.js (處理 PDF) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-    <script src="app.js?v=1.2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="app.js?v=1.4"></script>
 </body>
 </html>
