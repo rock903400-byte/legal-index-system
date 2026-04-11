@@ -11,11 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allResults = [];
     let activeCategory = 'all';
+    let currentQuery = ''; // 紀錄目前搜尋的字串
 
     const performSearch = async () => {
         const query = searchInput.value.trim();
         if (!query) return;
 
+        currentQuery = query; // 儲存關鍵字供高亮使用
         resultsList.innerHTML = '<div class="empty-state">搜尋中...</div>';
         
         try {
@@ -94,8 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
             previewFrame.style.display = 'block';
             previewFrame.style.width = '100%';
             previewFrame.style.height = '100%';
-            // 使用 #toolbar=0&navpanes=0 可以讓 PDF 瀏覽器在支援的環境下更滿版，隱藏多餘的工具列
-            previewFrame.src = result.url + "#toolbar=0&navpanes=0&view=FitH";
+            // PDF 高亮：使用 #search="keyword" (僅 Chrome/Edge 支援) 
+            // 同時加入 toolbar=0 隱藏多餘工具列
+            const highlightParam = currentQuery ? `&search="${encodeURIComponent(currentQuery)}"` : '';
+            previewFrame.src = result.url + `#toolbar=0&navpanes=0&view=FitH${highlightParam}`;
         } else if (filename.endsWith('.docx')) {
             previewFrame.style.display = 'none';
             previewFrame.src = '';
@@ -105,9 +109,22 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const response = await fetch(result.url);
                 const arrayBuffer = await response.arrayBuffer();
-                // 呼叫 Mammoth 轉換 docx 為 html
                 const renderResult = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
-                docxViewer.innerHTML = `<div class="docx-content">${renderResult.value}</div>`;
+                
+                let html = renderResult.value;
+                // Word 高亮：手動替換文字內容
+                if (currentQuery) {
+                    const regex = new RegExp(`(${currentQuery})`, 'gi');
+                    html = html.replace(regex, '<mark class="doc-highlight">$1</mark>');
+                }
+                
+                docxViewer.innerHTML = `<div class="docx-content">${html}</div>`;
+                // 自動捲動到第一個高亮點
+                setTimeout(() => {
+                    const firstMark = docxViewer.querySelector('.doc-highlight');
+                    if (firstMark) firstMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 500);
+                
             } catch (err) {
                 console.error('DOCX render error:', err);
                 docxViewer.innerHTML = `

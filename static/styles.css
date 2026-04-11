@@ -210,17 +210,27 @@ aside h3 {
 }
 
 #preview-section.open {
-    width: 60%; /* 電腦版稍微調寬一點 */
+    width: 75%; /* 電腦版改為 75%，提供更廣的閱讀視野 */
+}
+
+/* 文件內高亮樣式 (Word) */
+.doc-highlight {
+    background-color: #ffeb3b; /* 鮮黃色 */
+    color: #000;
+    padding: 2px 0;
+    font-weight: bold;
+    border-radius: 2px;
+    box-shadow: 0 0 5px rgba(255, 235, 59, 0.5);
 }
 
 #preview-header {
-    padding: 0.8rem 1rem;
-    background-color: var(--primary);
+    padding: 0.8rem 1.2rem;
+    background-color: #34495e; /* 更深沉的專業藍灰色 */
     color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 #preview-title {
