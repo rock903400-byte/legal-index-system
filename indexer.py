@@ -4,14 +4,15 @@ import fitz  # PyMuPDF
 from docx import Document
 import re
 
-# 設定
-# 取得目前檔案所在的目錄
+# --- 1. 路徑設定 (確保與 main.py 同步) ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# 設定相對路徑：法規檔案放在同目錄下的 data 資料夾
+# 法規檔案放在同目錄下的 data 資料夾
 SOURCE_DIR = os.path.join(BASE_DIR, "data")
+# 資料庫檔案路徑
 DB_PATH = os.path.join(BASE_DIR, "legal_index.db")
 
 def get_category(filename):
+    """根據檔名自動分類"""
     categories = {
         "法": "法律",
         "辦法": "辦法",
@@ -29,6 +30,7 @@ def get_category(filename):
     return "其他"
 
 def extract_text_pdf(path):
+    """提取 PDF 文字內容"""
     try:
         doc = fitz.open(path)
         text = ""
@@ -37,21 +39,39 @@ def extract_text_pdf(path):
         doc.close()
         return text
     except Exception as e:
-        print(f"Error reading PDF {path}: {e}")
+        print(f"❌ PDF 解析失敗 {os.path.basename(path)}: {e}")
         return ""
 
 def extract_text_docx(path):
+    """提取 Word 文字內容 (包含段落與表格)"""
     try:
         doc = Document(path)
-        return "\n".join([para.text for para in doc.paragraphs])
+        full_text = []
+        # 1. 讀取所有段落
+        for para in doc.paragraphs:
+            if para.text.strip():
+                full_text.append(para.text)
+        
+        # 2. 讀取所有表格 (法規中常有表格內容，這部分很重要)
+        for table in doc.tables:
+            for row in table.rows:
+                row_data = []
+                for cell in row.cells:
+                    if cell.text.strip():
+                        row_data.append(cell.text.strip())
+                if row_data:
+                    full_text.append(" | ".join(row_data))
+                    
+        return "\n".join(full_text)
     except Exception as e:
-        print(f"Error reading DOCX {path}: {e}")
+        print(f"❌ Word 解析失敗 {os.path.basename(path)}: {e}")
         return ""
 
 def init_db():
+    """初始化 SQLite FTS5 全文檢索資料庫"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    # 建立 FTS5 全文檢索虛擬資料表
+    # 每次重建索引，確保資料最新且沒有重複
     cursor.execute("DROP TABLE IF EXISTS docs")
     cursor.execute("""
         CREATE VIRTUAL TABLE docs USING fts5(
@@ -66,24 +86,25 @@ def init_db():
     return conn
 
 def run_indexer():
-    print("--- Starting indexer ---")
+    """執行索引更新主程式"""
+    print("\n🚀 --- 開始建立法規索引 ---")
     
-    # 【優化重點：檢查資料夾是否存在，不存在就建立】
+    # 檢查資料夾是否存在
     if not os.path.exists(SOURCE_DIR):
-        print(f"Creating directory: {SOURCE_DIR}")
+        print(f"📁 建立資料夾: {SOURCE_DIR}")
         os.makedirs(SOURCE_DIR, exist_ok=True)
     
     conn = init_db()
     cursor = conn.cursor()
     
-    # 取得檔案清單 (使用 lower() 確保不論副檔名大小寫都能讀到)
+    # 取得檔案清單
     try:
         files = [f for f in os.listdir(SOURCE_DIR) if f.lower().endswith(('.pdf', '.docx'))]
     except Exception as e:
-        print(f"Error listing directory: {e}")
+        print(f"❌ 無法讀取資料夾: {e}")
         files = []
         
-    print(f"Found {len(files)} files to index in {SOURCE_DIR}.")
+    print(f"📂 找到 {len(files)} 份法規檔案於 {SOURCE_DIR}")
     
     indexed_count = 0
     for filename in files:
@@ -91,7 +112,7 @@ def run_indexer():
         category = get_category(filename)
         title = os.path.splitext(filename)[0]
         
-        print(f"[{indexed_count + 1}/{len(files)}] Indexing: {filename}")
+        print(f"⏳ [{indexed_count + 1}/{len(files)}] 正在處理: {filename}")
         
         try:
             if filename.lower().endswith('.pdf'):
@@ -99,18 +120,21 @@ def run_indexer():
             else:
                 content = extract_text_docx(path)
                 
-            cursor.execute(
-                "INSERT INTO docs (title, category, content, path, filename) VALUES (?, ?, ?, ?, ?)",
-                (title, category, content, path, filename)
-            )
-            indexed_count += 1
+            if content and content.strip():
+                cursor.execute(
+                    "INSERT INTO docs (title, category, content, path, filename) VALUES (?, ?, ?, ?, ?)",
+                    (title, category, content, path, filename)
+                )
+                indexed_count += 1
+            else:
+                print(f"⚠️  警告: {filename} 內容為空，跳過索引。")
+                
         except Exception as e:
-            # 如果單一檔案出錯，印出錯誤但繼續處理下一個檔案
-            print(f"Skipping {filename} due to error: {e}")
+            print(f"❌ 略過 {filename}，錯誤訊息: {e}")
         
     conn.commit()
     conn.close()
-    print(f"--- Indexing complete! Successfully indexed {indexed_count} files. ---")
+    print(f"✅ --- 索引建立完成！成功處理 {indexed_count} 份法規 ---\n")
 
 if __name__ == "__main__":
     run_indexer()
